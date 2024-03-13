@@ -3,6 +3,7 @@ import Link from "next/link";
 import Logo from "../../public/assets/logo.svg";
 import Logout from "../../public/assets/logout.svg";
 import { OrganizationSwitcher, SignOutButton, SignedIn } from "@clerk/nextjs";
+import { dark } from "@clerk/themes";
 
 function Topbar() {
   return (
@@ -25,8 +26,9 @@ function Topbar() {
 
         <OrganizationSwitcher
           appearance={{
+            baseTheme: dark,
             elements: {
-              organizationSwitcherTrigger: "px-0 text-white py-0.5 ml-2 ",
+              organizationSwitcherTrigger: "px-0 py-0.5 ml-2 ",
             },
           }}
         />
