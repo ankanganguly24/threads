@@ -82,7 +82,6 @@ const AccountProfile = ({ user, btnTitle }: Props) => {
 
     //Backend call to update user
   };
-  0;
 
   return (
     <Form {...form}>
