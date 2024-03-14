@@ -14,8 +14,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { userValidation } from "@/lib/validations/user";
 import z from "zod";
 import Image from "next/image";
-import { ChangeEvent } from "react";
+import { ChangeEvent, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
+import { isBase64Image } from "@/lib/utils";
+import { useUploadThing } from "@/lib/uploadthing";
 
 interface Props {
   user: {
@@ -30,6 +32,9 @@ interface Props {
 }
 
 const AccountProfile = ({ user, btnTitle }: Props) => {
+  const [files, setFiles] = useState<File[]>([]);
+  const { startUpload } = useUploadThing("media");
+
   const form = useForm({
     resolver: zodResolver(userValidation),
     defaultValues: {
@@ -41,15 +46,43 @@ const AccountProfile = ({ user, btnTitle }: Props) => {
   });
 
   const handleImage = (
-    e: ChangeEvent,
+    e: ChangeEvent<HTMLInputElement>,
     fieldChange: (value: string) => void
   ) => {
     e.preventDefault();
-  };
 
-  const onSubmit = (data: z.infer<typeof userValidation>) => {
-    console.log(data);
+    const fileReader = new FileReader();
+
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+
+      setFiles(Array.from(e.target.files));
+
+      if (!file.type.includes("image")) return;
+      fileReader.onload = async (event) => {
+        const imageDataUrl = event.target?.result?.toString() || "";
+        fieldChange(imageDataUrl);
+      };
+
+      fileReader.readAsDataURL(file);
+    }
   };
+  const onSubmit = async (values: z.infer<typeof userValidation>) => {
+    const blob = values.profile_photo;
+
+    const hasImageChanged = isBase64Image(blob);
+
+    if (hasImageChanged) {
+      const imgRes = await startUpload(files);
+
+      if (imgRes && imgRes[0].url) {
+        values.profile_photo = imgRes[0].url;
+      }
+    }
+
+    //Backend call to update user
+  };
+  0;
 
   return (
     <Form {...form}>
@@ -65,15 +98,21 @@ const AccountProfile = ({ user, btnTitle }: Props) => {
               <FormLabel className="account-form_image-label">
                 {field.value ? (
                   <Image
+                    src={field.value}
+                    alt="profile"
+                    width={100}
+                    height={100}
+                    priority
+                    className="rounded-full object-contain"
+                  />
+                ) : (
+                  <Image
                     src="../assets/profile.svg"
                     alt="profile"
                     width={24}
                     height={24}
-                    priority
                     className="object-contain"
                   />
-                ) : (
-                  ""
                 )}
               </FormLabel>
               <FormControl className="flex-1 text-base-semibold text-gray-200">
